@@ -1,9 +1,15 @@
 # Dependencies
 node_modules/
+pnpm-lock.yaml
 
 # Build output
 dist/
 .tsbuildinfo
+tsconfig.tsbuildinfo
+coverage/
+playwright-report/
+test-results/
+.vite/
 
 # IDE
 .vscode/
@@ -11,20 +17,29 @@ dist/
 
 # OS
 .DS_Store
+**/.DS_Store
 Thumbs.db
 
 # Logs
 *.log
 npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Environment
+.node-version
 .env
 .env.local
+.env.*
+!.env.example
+!.env.sample
 
 # Electron
 out/
 /release
 /config.json
+/bootstrap.json
 /.adnify
 /system_prompts_leaks-main
 /void-main
