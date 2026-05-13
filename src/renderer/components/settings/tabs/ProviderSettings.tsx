@@ -1457,8 +1457,8 @@ export function ProviderSettings({
                   </h5>
                   <p className="mt-1 text-[11px] text-text-muted">
                     {language === 'zh'
-                      ? '仅在用户消息带图片且这里已配置多模态模型时，先做视觉分析，再交给当前主模型继续工具调用。未配置时完全走旧链路。'
-                      : 'Only when the user message includes images and a multimodal model is configured here will Adnify run a visual prepass before continuing with the current primary model.'}
+                      ? '配置多模态模型的连接参数，留空时使用主模型处理多模态任务。'
+                      : 'Configure the connection parameters for the multimodal model; if left blank, the main model will be used to process multimodal tasks.'}
                   </p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background/30 px-3 py-2 text-right">

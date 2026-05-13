@@ -11,6 +11,9 @@
     "url": "https://github.com/ad-naan/adnify.git"
   },
   "main": "dist/main/main.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
     "dev:main": "node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc -p tsconfig.main.json --noEmit --watch",
@@ -20,13 +23,18 @@
     "build:renderer": "vite build",
     "start": "electron .",
     "dist": "npm run build && electron-builder",
+    "prepare:native:win:x64": "node scripts/prepare-platform-native-deps.js win32 x64",
+    "prepare:native:win:arm64": "node scripts/prepare-platform-native-deps.js win32 arm64",
+    "dist:win:x64": "npm run prepare:native:win:x64 && npm run build && electron-builder --win --x64 -p never -c.npmRebuild=false",
+    "dist:win:arm64": "npm run prepare:native:win:arm64 && npm run build && electron-builder --win --arm64 -p never -c.npmRebuild=false",
     "pack": "npm run build && electron-builder --dir",
     "preview": "npm run build && electron .",
     "test": "vitest --run",
     "test:watch": "vitest",
     "test:coverage": "vitest --run --coverage",
     "assets:icons": "node scripts/generate-platform-icons.js",
-    "postinstall": "node scripts/download-wasm.js && npx electron-builder install-app-deps",
+    "postinstall": "node scripts/postinstall.js",
+    "install:native-deps": "electron-builder install-app-deps",
     "rebuild": "npx electron-rebuild -f -w node-pty",
     "rebuild:all": "npx electron-rebuild -f -w"
   },

@@ -1,5 +1,5 @@
 import { api } from '@/renderer/services/electronAPI'
-import type { LLMConfig, LLMMessage, MessageContent, MessageContentPart } from '@/shared/types/llm'
+import type { LLMConfig, LLMMessage, MessageContentPart } from '@/shared/types/llm'
 
 const MULTIMODAL_PREPASS_SYSTEM_PROMPT = `You are a visual analysis preprocessor for a coding assistant.
 
@@ -74,24 +74,34 @@ export function buildVisualAnalysisPrefix(summary: string): string {
   return `## Visual Analysis Summary\n${summary.trim()}\n\n## Original User Request\n`
 }
 
-export function injectVisualSummaryIntoMessages(messages: LLMMessage[], summary: string): LLMMessage[] {
-  const lastUserIndex = [...messages].map(message => message.role).lastIndexOf('user')
+function findLatestUserMessageIndex(messages: LLMMessage[]): number {
+  return [...messages].map(message => message.role).lastIndexOf('user')
+}
+
+function extractUserRequestText(message: LLMMessage): string {
+  if (typeof message.content === 'string') {
+    return message.content
+  }
+
+  const textParts = (message.content || [])
+    .filter((part): part is Extract<MessageContentPart, { type: 'text' }> => part.type === 'text')
+    .map(part => part.text.trim())
+    .filter(Boolean)
+
+  return textParts.join('\n\n')
+}
+
+function rewriteLatestUserMessageAsText(
+  messages: LLMMessage[],
+  buildContent: (message: LLMMessage) => string,
+): LLMMessage[] {
+  const lastUserIndex = findLatestUserMessageIndex(messages)
   if (lastUserIndex < 0) {
     return messages
   }
 
   const targetMessage = messages[lastUserIndex]
-  const prefix = buildVisualAnalysisPrefix(summary)
-  let nextContent: MessageContent
-
-  if (typeof targetMessage.content === 'string') {
-    nextContent = `${prefix}${targetMessage.content}`
-  } else {
-    nextContent = [
-      { type: 'text', text: prefix } satisfies MessageContentPart,
-      ...((targetMessage.content || []) as MessageContentPart[]),
-    ]
-  }
+  const nextContent = buildContent(targetMessage)
 
   return messages.map((message, index) => (
     index === lastUserIndex
@@ -101,4 +111,21 @@ export function injectVisualSummaryIntoMessages(messages: LLMMessage[], summary:
         }
       : message
   ))
+}
+
+export function injectVisualSummaryIntoMessages(messages: LLMMessage[], summary: string): LLMMessage[] {
+  const prefix = buildVisualAnalysisPrefix(summary)
+
+  return rewriteLatestUserMessageAsText(messages, (message) => {
+    const originalRequest = extractUserRequestText(message).trim()
+    const requestBody = originalRequest || '(No additional user text was provided.)'
+    return `${prefix}${requestBody}`
+  })
+}
+
+export function stripImagesFromLatestUserMessage(messages: LLMMessage[]): LLMMessage[] {
+  return rewriteLatestUserMessageAsText(messages, (message) => {
+    const originalRequest = extractUserRequestText(message).trim()
+    return originalRequest || '(The user provided image input without additional text.)'
+  })
 }

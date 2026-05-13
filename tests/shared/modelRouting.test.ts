@@ -3,7 +3,7 @@ import {
   resolveRuntimeModelRoutingConfig,
   resolveMessageRouting,
 } from '@shared/config/modelRouting'
-import { injectVisualSummaryIntoMessages } from '@renderer/agent/services/multimodalRoutingService'
+import { injectVisualSummaryIntoMessages, stripImagesFromLatestUserMessage } from '@renderer/agent/services/multimodalRoutingService'
 import type { LLMConfig, LLMMessage } from '@shared/types/llm'
 
 function createConfig(overrides: Partial<LLMConfig> = {}): LLMConfig {
@@ -148,9 +148,11 @@ describe('model routing', () => {
     const injected = injectVisualSummaryIntoMessages(messages, '### Image Overview\nA dashboard screenshot')
 
     expect(injected[0]).toEqual(messages[0])
-    expect(Array.isArray(injected[1].content)).toBe(true)
-    expect((injected[1].content as Array<{ type: string; text?: string }>)[0].text).toContain('## Visual Analysis Summary')
-    expect((injected[1].content as Array<{ type: string; text?: string }>)[0].text).toContain('## Original User Request')
+    expect(typeof injected[1].content).toBe('string')
+    expect(injected[1].content).toContain('## Visual Analysis Summary')
+    expect(injected[1].content).toContain('## Original User Request')
+    expect(injected[1].content).toContain('what is shown here?')
+    expect(injected[1].content).not.toContain('abc123')
   })
 
   it('injects the visual analysis summary into string user content', () => {
@@ -165,5 +167,23 @@ describe('model routing', () => {
     expect(injectedContent).toContain('## Visual Analysis Summary')
     expect(injectedContent).toContain('## Original User Request')
     expect(injectedContent).toContain('please continue')
+  })
+
+  it('strips image parts from the latest user message for fallback to the primary model', () => {
+    const messages: LLMMessage[] = [
+      { role: 'assistant', content: 'previous response' },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'please inspect this image' },
+          { type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'abc123' } },
+        ],
+      },
+    ]
+
+    const stripped = stripImagesFromLatestUserMessage(messages)
+
+    expect(stripped[0]).toEqual(messages[0])
+    expect(stripped[1].content).toBe('please inspect this image')
   })
 })

@@ -19,7 +19,7 @@ import type { LLMConfig, LLMCallResult, ExecutionContext, LoopCheckResult } from
 import { resolveMessageRouting, resolveRuntimeModelRoutingConfig } from '@shared/config/modelRouting'
 import { pickLocalizedText, translateAgentText } from '../utils/agentText'
 import { checkAndHandleCompression as runCompressionCheck } from './contextCompression'
-import { injectVisualSummaryIntoMessages, runMultimodalPrepass } from '../services/multimodalRoutingService'
+import { injectVisualSummaryIntoMessages, runMultimodalPrepass, stripImagesFromLatestUserMessage } from '../services/multimodalRoutingService'
 
 const importToolRuntime = () => import('../tools')
 const importExecuteTools = () => import('./tools').then(m => m.executeTools)
@@ -413,6 +413,7 @@ export async function runLoop(
         })
         requestMessages = injectVisualSummaryIntoMessages(requestMessages, prepassResult.summary)
       } catch (error) {
+        requestMessages = stripImagesFromLatestUserMessage(requestMessages)
         const { language } = useStore.getState()
         const reason = error instanceof Error && error.message ? ` ${error.message}` : ''
         threadStore.addSystemAlertPart(assistantId, {
