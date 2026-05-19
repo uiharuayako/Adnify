@@ -129,6 +129,30 @@ body {
   cursor: var(--cursor-default);
 }
 
+:root.low-spec-mode {
+  --floating-surface-blur: 0px;
+  --floating-surface-saturate: 100%;
+  --floating-surface-shadow: none;
+}
+
+.low-spec-mode [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.low-spec-mode [class*="shadow"] {
+  box-shadow: none !important;
+}
+
+.low-spec-mode *,
+.low-spec-mode *::before,
+.low-spec-mode *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 .layout-density-compact {
   --layout-sidebar-width: 54px;
   --layout-panel-padding: 0.75rem;

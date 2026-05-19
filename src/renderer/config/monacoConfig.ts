@@ -7,6 +7,7 @@ import type { editor } from 'monaco-editor'
 import { getEditorConfig } from '@renderer/settings'
 import { LargeFileInfo, getLargeFileEditorOptions } from '@/renderer/services/largeFileService'
 import type { EditorConfig } from '@shared/config/types'
+import { isLowSpecModeEnabled } from '@renderer/performance/lowSpec'
 
 /**
  * 获取 Monaco 编辑器的完整配置选项
@@ -16,6 +17,7 @@ export function getMonacoEditorOptions(
   editorConfig?: EditorConfig
 ): editor.IStandaloneEditorConstructionOptions {
   const config = editorConfig ?? getEditorConfig()
+  const lowSpecMode = isLowSpecModeEnabled(config)
 
   const baseOptions: editor.IStandaloneEditorConstructionOptions = {
     // 字体和外观
@@ -30,21 +32,21 @@ export function getMonacoEditorOptions(
     
     // 小地图
     minimap: {
-      enabled: config.minimap,
+      enabled: config.minimap && !lowSpecMode,
       scale: config.minimapScale,
       renderCharacters: false,
     },
     
     // 滚动和布局
     scrollBeyondLastLine: false,
-    smoothScrolling: true,
+    smoothScrolling: !lowSpecMode,
     padding: { top: 24, bottom: 16 },
     automaticLayout: true,
     fixedOverflowWidgets: true,
     
     // 光标
-    cursorBlinking: 'smooth',
-    cursorSmoothCaretAnimation: 'on',
+    cursorBlinking: lowSpecMode ? 'solid' : 'smooth',
+    cursorSmoothCaretAnimation: lowSpecMode ? 'off' : 'on',
     cursorStyle: 'line',
     cursorWidth: 2,
     
@@ -144,7 +146,7 @@ export function getMonacoEditorOptions(
     occurrencesHighlight: 'singleFile',
     
     // 滚动和导航
-    stickyScroll: { enabled: true, maxLineCount: 5 },
+    stickyScroll: { enabled: !lowSpecMode, maxLineCount: 5 },
     scrollbar: {
       vertical: 'auto',
       horizontal: 'auto',

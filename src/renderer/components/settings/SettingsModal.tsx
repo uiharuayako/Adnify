@@ -83,6 +83,8 @@ function toEditorSettingsState(config: ReturnType<typeof getEditorConfig>): Edit
         maxSearchResults: config.performance.maxSearchResults,
         saveDebounceMs: config.performance.saveDebounceMs,
         flushIntervalMs: config.performance.flushIntervalMs,
+        lowSpecMode: config.performance.lowSpecMode,
+        terminalRendererMode: config.performance.terminalRendererMode,
     }
 }
 
@@ -233,6 +235,8 @@ export default function SettingsModal() {
             maxSearchResults: editorSettings.maxSearchResults,
             saveDebounceMs: editorSettings.saveDebounceMs,
             flushIntervalMs: editorSettings.flushIntervalMs,
+            lowSpecMode: editorSettings.lowSpecMode,
+            terminalRendererMode: editorSettings.terminalRendererMode,
         },
     }), [advancedEditorConfig, editorSettings])
 

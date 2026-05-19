@@ -39,6 +39,7 @@ import {
   type SessionMeta,
 } from './sessionStorageSupport'
 import { SessionFileStore } from './sessionFileStore'
+import { getEffectiveFlushIntervalMs } from '@renderer/performance/lowSpec'
 
 export const ADNIFY_DIR_NAME = '.adnify'
 
@@ -290,7 +291,7 @@ class AdnifyDirService {
     this.flushTimer = setTimeout(() => {
       this.flushTimer = null
       this.flush().catch(err => logger.system.error('[AdnifyDir] Flush error:', err))
-    }, getEditorConfig().performance.flushIntervalMs)
+    }, getEffectiveFlushIntervalMs(getEditorConfig()))
   }
 
   isInitialized(): boolean {
@@ -749,6 +750,15 @@ class AdnifyDirService {
       return await api.file.write(this.getFilePath(file, rootPath), content)
     } catch (error) {
       logger.system.error(`[AdnifyDir] Failed to write ${file}:`, error)
+      return false
+    }
+  }
+
+  async appendText(file: AdnifyFile | string, content: string, rootPath?: string): Promise<boolean> {
+    try {
+      return await api.file.append(this.getFilePath(file, rootPath), content)
+    } catch (error) {
+      logger.system.error(`[AdnifyDir] Failed to append ${file}:`, error)
       return false
     }
   }

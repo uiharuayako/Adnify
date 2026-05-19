@@ -352,6 +352,7 @@ export interface ElectronAPI {
   readFile: (path: string, encoding?: string) => Promise<string | null>
   readBinaryFile: (path: string) => Promise<string | null>
   writeFile: (path: string, content: string, encoding?: string) => Promise<boolean>
+  appendFile: (path: string, content: string, encoding?: string) => Promise<boolean>
   ensureDir: (path: string) => Promise<boolean>
   saveFile: (content: string, path?: string, encoding?: string) => Promise<string | null>
   fileExists: (path: string) => Promise<boolean>

@@ -174,12 +174,11 @@ class WorkspaceAnalyticsService {
 
     this.flushPromise = (async () => {
       try {
-        const existing = await adnifyDir.readText(STATS_FILE)
-        const nextLines = pending.map(event => JSON.stringify(event)).join('\n')
-        const nextContent = existing && existing.trim().length > 0
-          ? `${existing.trimEnd()}\n${nextLines}\n`
-          : `${nextLines}\n`
-        await adnifyDir.writeText(STATS_FILE, nextContent)
+        const nextContent = `${pending.map(event => JSON.stringify(event)).join('\n')}\n`
+        const appended = await adnifyDir.appendText(STATS_FILE, nextContent)
+        if (!appended) {
+          throw new Error('append analytics events failed')
+        }
         this.eventsCache = this.eventsCache ? [...this.eventsCache, ...pending] : null
       } catch (error) {
         logger.system.warn('[WorkspaceAnalytics] Failed to flush analytics events:', error)

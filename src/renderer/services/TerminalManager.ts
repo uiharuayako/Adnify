@@ -20,6 +20,7 @@ import { toAppError } from "@shared/utils/errorHandler";
 import { isMac } from "@services/keybindingService";
 import { getInteractiveTerminalBackend } from "@/renderer/agent/tools/commandRuntime";
 import { readClipboardText, writeClipboardText } from "@/renderer/services/clipboardService";
+import { getEffectiveTerminalRendererMode } from '@renderer/performance/lowSpec'
 
 // ===== 类型定义 =====
 
@@ -635,8 +636,14 @@ class TerminalManagerClass {
   }
 
   mountTerminal(id: string, container: HTMLDivElement): boolean {
+    const rendererMode = getEffectiveTerminalRendererMode()
+
     if (this.xtermInstances.has(id)) {
       const existing = this.xtermInstances.get(id)!;
+      if (rendererMode !== 'webgl' && existing.webglAddon) {
+        existing.webglAddon.dispose();
+        existing.webglAddon = undefined;
+      }
       if (existing.container !== container) {
         existing.container = container;
         if (!container.isConnected) {
@@ -645,7 +652,7 @@ class TerminalManagerClass {
         existing.terminal.open(container);
         try {
           // 如果之前被卸载了 WebGL，则重新挂载
-          if (!existing.webglAddon) {
+          if (rendererMode === 'webgl' && !existing.webglAddon) {
             const webglAddon = new WebglAddon();
             existing.terminal.loadAddon(webglAddon);
             existing.webglAddon = webglAddon;
@@ -679,17 +686,19 @@ class TerminalManagerClass {
     terminal.open(container);
 
     let webglAddon: WebglAddon | undefined;
-    try {
-      webglAddon = new WebglAddon();
-      terminal.loadAddon(webglAddon);
-      webglAddon.onContextLoss(() => {
-        webglAddon?.dispose();
-        webglAddon = undefined;
-        if (this.xtermInstances.has(id)) {
-          this.xtermInstances.get(id)!.webglAddon = undefined;
-        }
-      });
-    } catch { }
+    if (rendererMode === 'webgl') {
+      try {
+        webglAddon = new WebglAddon();
+        terminal.loadAddon(webglAddon);
+        webglAddon.onContextLoss(() => {
+          webglAddon?.dispose();
+          webglAddon = undefined;
+          if (this.xtermInstances.has(id)) {
+            this.xtermInstances.get(id)!.webglAddon = undefined;
+          }
+        });
+      } catch { }
+    }
 
     // 处理终端输入
     terminal.onData((data) => {

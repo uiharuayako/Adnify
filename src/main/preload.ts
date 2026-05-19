@@ -215,6 +215,7 @@ export interface ElectronAPI {
   getFileTree: (path: string, maxDepth?: number) => Promise<string>
   readFile: (path: string, encoding?: string) => Promise<string | null>
   writeFile: (path: string, content: string, encoding?: string) => Promise<boolean>
+  appendFile: (path: string, content: string, encoding?: string) => Promise<boolean>
   ensureDir: (path: string) => Promise<boolean>
   saveFile: (content: string, path?: string, encoding?: string) => Promise<string | null>
   fileExists: (path: string) => Promise<boolean>
@@ -514,6 +515,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readFile: (path: string, encoding?: string) => ipcRenderer.invoke('file:read', path, encoding),
   readBinaryFile: (path: string) => ipcRenderer.invoke('file:readBinary', path),
   writeFile: (path: string, content: string, encoding?: string) => ipcRenderer.invoke('file:write', path, content, encoding),
+  appendFile: (path: string, content: string, encoding?: string) => ipcRenderer.invoke('file:append', path, content, encoding),
   ensureDir: (path: string) => ipcRenderer.invoke('file:ensureDir', path),
   saveFile: (content: string, path?: string, encoding?: string) => ipcRenderer.invoke('file:save', content, path, encoding),
   fileExists: (path: string) => ipcRenderer.invoke('file:exists', path),

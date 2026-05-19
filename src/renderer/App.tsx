@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, useCallback, useEffect, useMemo, useRef } from 'react'
+import { MotionConfig } from 'framer-motion'
 import { useStore } from './store'
 import { useWindowTitle, useAppInit, useOpenFilesFromSystem, useGlobalShortcuts, useFileWatcher, useSidebarResize, useChatResize, useAppShutdownState, usePreviewDiscoveryToasts } from './hooks'
 import TitleBar from './components/layout/TitleBar'
@@ -65,6 +66,7 @@ function AppContent() {
   const debugVisible = useStore((state) => state.debugVisible)
   const chatVisible = useStore((state) => state.chatVisible)
   const editorConfig = useStore((state) => state.editorConfig)
+  const lowSpecMode = editorConfig.performance.lowSpecMode
 
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
@@ -73,6 +75,16 @@ function AppContent() {
   useEffect(() => {
     window.__ADNIFY_STORE__ = { getState: () => useStore.getState() }
   }, [])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('low-spec-mode', lowSpecMode)
+    document.body.classList.toggle('low-spec-mode', lowSpecMode)
+
+    return () => {
+      document.documentElement.classList.remove('low-spec-mode')
+      document.body.classList.remove('low-spec-mode')
+    }
+  }, [lowSpecMode])
 
   const hasWorkspace = useMemo(() => Boolean(workspace && workspace.roots.length > 0), [workspace])
   const isShellStudioActive = activeSidePanel === 'shell'
@@ -107,7 +119,8 @@ function AppContent() {
   const handleCloseOnboarding = useCallback(() => setShowOnboarding(false), [])
 
   return (
-    <div className={`h-screen flex flex-col bg-transparent overflow-hidden text-text-primary selection:bg-accent/30 selection:text-white relative ${layoutDensityClass}`}>
+    <MotionConfig reducedMotion={lowSpecMode ? 'always' : 'never'}>
+      <div className={`h-screen flex flex-col bg-transparent overflow-hidden text-text-primary selection:bg-accent/30 selection:text-white relative ${layoutDensityClass}`}>
       <div className="relative z-10 flex flex-col h-full">
         <TitleBar />
 
@@ -131,7 +144,7 @@ function AppContent() {
               )}
 
               <div className="flex-1 flex min-w-0 bg-background relative">
-                <EmotionAmbientGlow />
+                {!lowSpecMode && <EmotionAmbientGlow />}
 
                 <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                   {isShellStudioActive ? (
@@ -240,7 +253,8 @@ function AppContent() {
 
       <GlobalConfirmDialog />
       <GlobalToastContainer />
-    </div>
+      </div>
+    </MotionConfig>
   )
 }
 

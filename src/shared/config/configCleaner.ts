@@ -64,6 +64,8 @@ export interface EditorConfigSchema {
     largeFileLineCount?: number
     veryLargeFileLineCount?: number
     maxSearchResults?: number
+    lowSpecMode?: boolean
+    terminalRendererMode?: 'auto' | 'webgl' | 'dom'
   }
   ai?: {
     completionEnabled?: boolean
@@ -145,6 +147,12 @@ export function cleanEditorConfig(config: Record<string, unknown>): EditorConfig
       if (typeof p[field] === 'number') {
         (cleaned.performance as Record<string, number>)[field] = p[field] as number
       }
+    }
+    if (typeof p.lowSpecMode === 'boolean') {
+      cleaned.performance.lowSpecMode = p.lowSpecMode
+    }
+    if (p.terminalRendererMode === 'auto' || p.terminalRendererMode === 'webgl' || p.terminalRendererMode === 'dom') {
+      cleaned.performance.terminalRendererMode = p.terminalRendererMode
     }
   }
 

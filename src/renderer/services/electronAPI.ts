@@ -61,6 +61,7 @@ function createGroupedAPI() {
       read: (path: string, encoding?: string) => raw.readFile(path, encoding),
       readBinary: (path: string) => raw.readBinaryFile(path),
       write: (path: string, content: string, encoding?: string) => raw.writeFile(path, content, encoding),
+      append: (path: string, content: string, encoding?: string) => raw.appendFile(path, content, encoding),
       save: (content: string, path?: string, encoding?: string) => raw.saveFile(content, path, encoding),
       exists: (path: string) => raw.fileExists(path),
       mkdir: (path: string) => raw.mkdir(path),

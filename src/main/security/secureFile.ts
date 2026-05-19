@@ -275,6 +275,51 @@ export function registerSecureFileHandlers(
     }
   })
 
+  ipcMain.handle('file:append', async (event, filePath: string, content: string, encoding?: string) => {
+    if (!filePath || typeof filePath !== 'string') return false
+    if (content === undefined || content === null) return false
+
+    const workspace = getWorkspaceSessionFn(event)
+
+    if (workspace && !securityManager.validateWorkspacePath(filePath, workspace.roots)) {
+      securityManager.logOperation(OperationType.FILE_WRITE, filePath, false, {
+        reason: '安全底线：超出工作区边界',
+      })
+      return false
+    }
+
+    if (securityManager.isSensitivePath(filePath)) {
+      securityManager.logOperation(OperationType.FILE_WRITE, filePath, false, {
+        reason: '安全底线：敏感路径',
+      })
+      return false
+    }
+
+    const forbiddenPatterns = [/\.exe$/i, /\.dll$/i, /\.sys$/i, /\.tmp$/i, /\.temp$/i]
+    for (const pattern of forbiddenPatterns) {
+      if (pattern.test(filePath)) {
+        securityManager.logOperation(OperationType.FILE_WRITE, filePath, false, {
+          reason: '安全底线：禁止类型',
+        })
+        return false
+      }
+    }
+
+    try {
+      await fsPromises.mkdir(path.dirname(filePath), { recursive: true })
+      await fsPromises.appendFile(filePath, content, (encoding as BufferEncoding) || 'utf-8')
+      securityManager.logOperation(OperationType.FILE_WRITE, filePath, true, {
+        size: content.length,
+        bypass: true,
+        append: true,
+      })
+      return true
+    } catch (err) {
+      logger.security.error('[File] append failed:', filePath, toAppError(err).message)
+      return false
+    }
+  })
+
   // 确保目录存在
   ipcMain.handle('file:ensureDir', async (event, dirPath: string) => {
     if (!dirPath) return false

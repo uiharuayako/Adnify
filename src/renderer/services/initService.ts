@@ -27,6 +27,7 @@ import {
   restoreWorkspaceAgentStore,
 } from './workspaceLoadService'
 import { workspaceAnalyticsService } from './workspaceAnalyticsService'
+import { getBackgroundInitIdleTimeoutMs } from '@renderer/performance/lowSpec'
 
 export interface InitResult {
   success: boolean
@@ -162,7 +163,7 @@ function scheduleBackgroundInit(): void {
     } catch (e) {
       logger.system.warn('[Init] Worker service init failed:', e)
     }
-  })
+  }, getBackgroundInitIdleTimeoutMs(useStore.getState().editorConfig))
 }
 
 export async function initializeApp(

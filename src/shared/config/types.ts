@@ -130,6 +130,8 @@ export interface LspConfig {
   crashCooldownMs: number
 }
 
+export type TerminalRendererMode = 'auto' | 'webgl' | 'dom'
+
 export interface PerformanceConfig {
   maxProjectFiles: number
   maxFileTreeDepth: number
@@ -150,6 +152,8 @@ export interface PerformanceConfig {
   largeFileLineCount: number
   veryLargeFileLineCount: number
   maxSearchResults: number
+  lowSpecMode: boolean
+  terminalRendererMode: TerminalRendererMode
 }
 
 export interface AiCompletionConfig {

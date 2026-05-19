@@ -51,15 +51,13 @@ import {
 } from './chatTimelineProjection'
 import { useMessageQueueStore } from '@/renderer/agent/store/slices/queueSlice'
 import { useMessageQueueConsumer } from '@/renderer/hooks/useMessageQueue'
+import { getChatHistoryWindow } from '@renderer/performance/lowSpec'
 
 interface RenderableMessageItem {
   message: ChatMessageType
   hasCheckpoint: boolean
   renderKey: string
 }
-
-const HISTORY_REVEAL_BATCH_SIZE = 50
-const HISTORY_VISIBLE_TAIL_COUNT = 100
 
 function buildRenderableMessageItems(
   messages: ChatMessageType[],
@@ -100,6 +98,7 @@ export default function ChatPanel() {
   // 从 AgentStore 获取 inputPrompt
   const inputPrompt = useAgentStore(state => state.inputPrompt)
   const setInputPrompt = useAgentStore(state => state.setInputPrompt)
+  const editorConfig = useStore((state) => state.editorConfig)
   const hasActiveThread = useAgentStore(state => {
     if (!state.currentThreadId) return false
     return !!state.threads[state.currentThreadId]
@@ -171,16 +170,17 @@ export default function ChatPanel() {
 
   // 骨架屏转场状态：避免大量消息的突现造成卡顿
   const [threadHistoryRevealCount, setThreadHistoryRevealCount] = useState<Record<string, number>>({})
+  const historyWindow = useMemo(() => getChatHistoryWindow(editorConfig), [editorConfig])
   const currentThreadHistoryRevealCount = currentThreadId
     ? (threadHistoryRevealCount[currentThreadId] ?? 0)
     : 0
   const timelineProjection = useMemo(
     () => buildChatTimelineProjection(filteredMessages, {
       expandedHistoryCount: currentThreadHistoryRevealCount,
-      visibleTailCount: HISTORY_VISIBLE_TAIL_COUNT,
-      revealBatchSize: HISTORY_REVEAL_BATCH_SIZE,
+      visibleTailCount: historyWindow.visibleTailCount,
+      revealBatchSize: historyWindow.revealBatchSize,
     }),
-    [currentThreadHistoryRevealCount, filteredMessages]
+    [currentThreadHistoryRevealCount, filteredMessages, historyWindow]
   )
   const visibleRenderableMessages = useMemo<RenderableMessageItem[]>(
     () => buildRenderableMessageItems(timelineProjection.visibleMessages, checkpointMessageIds),

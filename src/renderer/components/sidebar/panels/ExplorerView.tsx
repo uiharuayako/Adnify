@@ -10,7 +10,6 @@ import { useShallow } from 'zustand/react/shallow'
 import { t } from '@renderer/i18n'
 import { getDirPath, joinPath, pathStartsWith, pathEquals } from '@shared/utils/pathUtils'
 import { gitService } from '@renderer/services/gitService'
-import { getEditorConfig } from '@renderer/settings'
 import { toast } from '../../common/ToastProvider'
 import { openFolderFromDialog } from '@services/workspaceOpenService'
 import { directoryCacheService } from '@services/directoryCacheService'
@@ -20,6 +19,7 @@ import { VirtualFileTree } from '../../tree/VirtualFileTree'
 import { terminalManager } from '@/renderer/services/TerminalManager'
 import { explorerClipboardService, type ExplorerClipboardItem } from '@/renderer/services/explorerClipboardService'
 import { formatShortcut } from '@/renderer/services/keybindingService'
+import { getEffectiveFileChangeDebounceMs } from '@renderer/performance/lowSpec'
 
 export interface TreeRefreshOptions {
   resetTree?: boolean
@@ -47,11 +47,13 @@ export function ExplorerView() {
     setIsGitRepo,
     expandFolder,
     activeFilePath,
+    editorConfig,
   } = useStore(useShallow(s => ({
     workspacePath: s.workspacePath, workspace: s.workspace, files: s.files, setFiles: s.setFiles,
     language: s.language, gitStatus: s.gitStatus,
     setGitStatus: s.setGitStatus, isGitRepo: s.isGitRepo, setIsGitRepo: s.setIsGitRepo,
     expandFolder: s.expandFolder, activeFilePath: s.activeFilePath,
+    editorConfig: s.editorConfig,
   })))
   const setTerminalVisible = useStore(state => state.setTerminalVisible)
 
@@ -190,10 +192,10 @@ export function ExplorerView() {
   useEffect(() => {
     if (!workspacePath) return
 
-    const config = getEditorConfig()
     let debounceTimer: ReturnType<typeof setTimeout> | null = null
     let gitDebounceTimer: ReturnType<typeof setTimeout> | null = null
     let pendingChanges: Array<{ path: string; event: string }> = []
+    const fileChangeDebounceMs = getEffectiveFileChangeDebounceMs(editorConfig)
 
     const unsubscribe = api.file.onChanged((event: { event: 'create' | 'update' | 'delete'; path: string }) => {
       if (pathStartsWith(event.path, workspacePath)) {
@@ -230,10 +232,10 @@ export function ExplorerView() {
               refreshRoot: shouldRefreshRoot,
             })
           }
-        }, config.performance.fileChangeDebounceMs)
+        }, fileChangeDebounceMs)
         
         // 如果启用了自动刷新且是 .git 目录变化，延迟刷新 Git 状态
-        if (config.git.autoRefresh && event.path.includes('.git')) {
+        if (editorConfig.git.autoRefresh && event.path.includes('.git')) {
           if (gitDebounceTimer) clearTimeout(gitDebounceTimer)
           gitDebounceTimer = setTimeout(updateGitStatus, 500)
         }
@@ -245,7 +247,7 @@ export function ExplorerView() {
       if (debounceTimer) clearTimeout(debounceTimer)
       if (gitDebounceTimer) clearTimeout(gitDebounceTimer)
     }
-  }, [workspacePath, refreshFiles, updateGitStatus])
+  }, [editorConfig, refreshFiles, updateGitStatus, workspacePath])
 
   const handleOpenFolder = async () => {
     await openFolderFromDialog(language)

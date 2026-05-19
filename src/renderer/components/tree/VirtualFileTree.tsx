@@ -32,6 +32,7 @@ import { writeClipboardText } from '@/renderer/services/clipboardService'
 import FileIcon from '../common/FileIcon'
 import { getFileType } from '../editor/FilePreview'
 import type { TreeRefreshOptions } from '../sidebar/panels/ExplorerView'
+import { shouldPreloadDirectoryChildren } from '@renderer/performance/lowSpec'
 
 // 每个节点的高度（像素）
 const ITEM_HEIGHT = 30
@@ -85,7 +86,8 @@ export const VirtualFileTree = memo(function VirtualFileTree({
     setActiveFile,
     activeFilePath,
     language,
-    workspacePath
+    workspacePath,
+    editorConfig,
   } = useStore(useShallow(s => ({
     expandedFolders: s.expandedFolders,
     toggleFolder: s.toggleFolder,
@@ -94,8 +96,10 @@ export const VirtualFileTree = memo(function VirtualFileTree({
     setActiveFile: s.setActiveFile,
     activeFilePath: s.activeFilePath,
     language: s.language,
-    workspacePath: s.workspacePath
+    workspacePath: s.workspacePath,
+    editorConfig: s.editorConfig,
   })))
+  const shouldPreloadChildren = shouldPreloadDirectoryChildren(editorConfig)
 
   // 焦点状态
   const [focusedPath, setFocusedPath] = useState<string | null>(null)
@@ -170,7 +174,7 @@ export const VirtualFileTree = memo(function VirtualFileTree({
 
       // 预加载下一层
       const subDirs = children.filter((c) => c.isDirectory).slice(0, 3)
-      if (subDirs.length > 0) {
+      if (shouldPreloadChildren && subDirs.length > 0) {
         directoryCacheService.preload(subDirs.map((d) => d.path))
       }
     } finally {
@@ -182,7 +186,7 @@ export const VirtualFileTree = memo(function VirtualFileTree({
         })
       }
     }
-  }, [])
+  }, [shouldPreloadChildren])
 
   useEffect(() => {
     setChildrenCache(new Map())

@@ -139,6 +139,10 @@ export const PERFORMANCE_DEFAULTS = {
 
   // 搜索限制
   maxSearchResults: 1000,
+
+  // 低性能兼容
+  lowSpecMode: false,
+  terminalRendererMode: 'auto' as const,
 } as const
 
 // ============================================

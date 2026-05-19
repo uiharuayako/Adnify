@@ -178,9 +178,50 @@ export function EditorSettings({ settings, setSettings, advancedConfig, setAdvan
                                 <label className={labelClass}>{language === 'zh' ? '滚动缓冲行数' : 'Scrollback Lines'}</label>
                                 <Input type="number" value={settings.terminalScrollback} onChange={(e) => setSettings({ ...settings, terminalScrollback: parseInt(e.target.value) || 1000 })} min={100} max={10000} step={100} className={inputClass} />
                             </div>
+                            <div className="col-span-2">
+                                <label className={labelClass}>{language === 'zh' ? '终端渲染模式' : 'Terminal Renderer'}</label>
+                                <Select
+                                    value={settings.terminalRendererMode}
+                                    onChange={(value) => setSettings({ ...settings, terminalRendererMode: value as typeof settings.terminalRendererMode })}
+                                    options={[
+                                        {
+                                            value: 'auto',
+                                            label: language === 'zh' ? '自动' : 'Auto',
+                                        },
+                                        {
+                                            value: 'webgl',
+                                            label: 'WebGL',
+                                        },
+                                        {
+                                            value: 'dom',
+                                            label: language === 'zh' ? '保守模式 (DOM)' : 'Conservative (DOM)',
+                                        },
+                                    ]}
+                                    className={`w-full ${inputClass}`}
+                                />
+                            </div>
                         </div>
                         <div className="pt-2">
                             <Switch label={language === 'zh' ? '光标闪烁' : 'Cursor Blink'} checked={advancedConfig.terminal.cursorBlink} onChange={(e) => setAdvancedConfig({ ...advancedConfig, terminal: { ...advancedConfig.terminal, cursorBlink: e.target.checked } })} />
+                        </div>
+                    </section>
+
+                    <section className={sectionClass}>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Zap className="w-4 h-4 text-accent" />
+                            <h5 className="text-sm font-bold text-text-primary">{language === 'zh' ? '低性能模式' : 'Low-Spec Mode'}</h5>
+                        </div>
+                        <div className="space-y-4">
+                            <Switch
+                                label={language === 'zh' ? '手动启用低性能模式' : 'Manually enable low-spec mode'}
+                                checked={settings.lowSpecMode}
+                                onChange={(e) => setSettings({ ...settings, lowSpecMode: e.target.checked })}
+                            />
+                            <p className="text-xs leading-6 text-text-muted">
+                                {language === 'zh'
+                                    ? '仅降低动画、渲染负载和非关键后台频率，不改变聊天、编辑、终端、会话和索引的功能语义。'
+                                    : 'Only reduces animation, rendering load, and non-critical background frequency. It does not change chat, editing, terminal, session, or indexing behavior.'}
+                            </p>
                         </div>
                     </section>
 
